@@ -1,0 +1,27 @@
+{
+  "name": "weave",
+  "version": "0.0.1",
+  "description": "Weave is an api development framework ",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsc -w",
+    "test": "jest index.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tulburg/weave.git"
+  },
+  "keywords": [
+    "Api",
+    "framework"
+  ],
+  "author": "Tolu Oluwagbemi<demos_08_dovish@icloud.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tulburg/weave/issues"
+  },
+  "homepage": "https://github.com/tulburg/weave#readme",
+  "devDependencies": {
+    "typescript": "^4.8.2"
+  }
+}
