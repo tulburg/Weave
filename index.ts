@@ -2,7 +2,7 @@ import {LongText, ShortText} from "./src/schema";
 import {CalleeFunction, DatabaseType, SchemaType, WeaveConfiguration} from "./types";
 import * as express from 'express';
 import * as core from "express-serve-static-core";
-import * as Mongoose from "mongoose";
+import Mongoose from "mongoose";
 import { LeanDocument, SchemaDefinition } from 'mongoose';
 import { Validator } from 'jsonschema';
 import http from 'http';
@@ -84,8 +84,9 @@ export class Weave {
             index++;
             callNext();
           } else {
+            const result = res as { code: number, message?: string, stack?: any };
             if(!res) this.response?.sendError(500, 'Function failed');
-            else this.response?.sendError(res.code, res.message as string, res.stack);
+            else this.response?.sendError(result.code, result.message as string, result.stack);
           };   
         }
       }
@@ -217,7 +218,12 @@ export const UserSchema = Schema({
   }
 });
 
-Mongoose.default.createConnection('mongodb://127.0.0.1:27017/test', {}).then(
+Mongoose.createConnection('mongodb://127.0.0.1:27017/test',{
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useCreateIndex: true,
+  useFindAndModify: false
+}).then(
   (db: any) => {
     const Api = new Weave({
       driver: 'express',

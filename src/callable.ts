@@ -45,9 +45,9 @@ export const CheckIfExists = {
     const { dbDriver, dbConnection } = weave.options;
     const { nextDb } = weave;
     if(dbDriver === DatabaseType.MongoDB) {
-      const model = dbConnection.model(nextDb[0], nextDb[1]);
-      const check = await model.findOne(params);
-      if(check && check[0]) {
+      const model = dbConnection?.model(nextDb[0], nextDb[1]);
+      const check = await model?.findOne(params);
+      if(check) {
         if(exists) return exists();
         else return true;
       }else {

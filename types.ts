@@ -15,6 +15,6 @@ export enum DatabaseType {
 
 export type CalleeFunction = (...args: any[]) => boolean | Promise<boolean> | { code: number, message?: string, stack?: any }
 
-export type DatabaseConnection = Mongoose.Connection | 'Bob';
+export type DatabaseConnection = Mongoose.Connection;
 
 export type SchemaType = typeof ShortText | typeof LongText
