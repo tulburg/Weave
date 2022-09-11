@@ -252,9 +252,14 @@ Mongoose.createConnection('mongodb://127.0.0.1:27017/test',{
       dbConnection: db,
       dbDriver: DatabaseType.MongoDB
     });
+    // Api.use(FireWall);
+    // Api.use(Cache);
     Api.endpoint('/login', 'POST')
       .mapBody(['email', 'password'])
-      .useBody(JSONSchemaValidator({email: (<any>ShortText).required(), password: (<any>LongText).required()}))
+      .useBody(JSONSchemaValidator({
+        email: (<any>ShortText).required(), 
+        password: (<any>LongText).required()
+      }))
       .useBody((weave: Weave) => {
         const { nextBody: body } = weave;
         body.email = body.email + 'not working';
@@ -264,9 +269,6 @@ Mongoose.createConnection('mongodb://127.0.0.1:27017/test',{
       //   token.permission = 10001;
       //   token.dependency = 10002;
       // }))
-      // .useHeader(SetCache)
-      // .useHeader(CheckFireWall)
-      // .useBody()
       // .mapDB('user', ['name', 'username', 'password'])
       .mapDB('user', UserSchema)
       .useDB(CheckIfExists.fromBody(['email', 'password'], () => true, () => {
