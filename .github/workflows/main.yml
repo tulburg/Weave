@@ -1,0 +1,20 @@
+name: Node.j5 Package
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  publish-gpr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+          registry-url: https://npm.pkg.github.com/
+          scope: "@fernjs"
+      - run: npm install
+      - run: pm publish
+        env:
+          NODE AUTH _TOKEN: $((secrets.GITHUB_TOKEN))
