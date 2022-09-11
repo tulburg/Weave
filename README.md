@@ -1,2 +1,2 @@
-# weave
-Weave is an api development framework built on express
+# fernjs
+Fern is an api development framework built on express
