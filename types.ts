@@ -13,7 +13,8 @@ export enum DatabaseType {
   MongoDB = 2
 }
 
-export type CalleeFunction = (...args: any[]) => boolean | Promise<boolean> | { code: number, message?: string, stack?: any }
+// export type CalleeFunction = (...args: any[]) => boolean | Promise<boolean> | { code: number, message?: string, stack?: any }
+export type CalleeFunction<T = any> = (...args: T[]) => boolean | Promise<boolean> | { code: number, message?: string, stack?: any }
 
 export type DatabaseConnection = Mongoose.Connection;
 

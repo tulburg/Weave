@@ -4,7 +4,7 @@
   "description": "Weave is an api development framework ",
   "main": "index.js",
   "scripts": {
-    "start": "tsc -w & nodemon --watch index.js",
+    "start": "tsc -w & nodemon --watch",
     "test": "jest index.test.js"
   },
   "repository": {
