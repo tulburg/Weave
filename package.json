@@ -12,7 +12,7 @@
     "url": "git+https://github.com/tulburg/fernjs.git"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/tulburg"
+    "registry": "https://npm.pkg.github.com/@fernjs"
   },
   "keywords": [
     "Api",
