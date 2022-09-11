@@ -17,4 +17,4 @@ jobs:
       - run: npm install
       - run: npm publish
         env:
-          NODE AUTH _TOKEN: ${{ secrets.NPMTOKEN }}
+          NODE AUTH _TOKEN: ${{ secrets.GITHUB_TOKEN }}
