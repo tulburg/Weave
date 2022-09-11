@@ -1,7 +1,7 @@
 {
-  "name": "weave",
+  "name": "fernjs",
   "version": "0.0.1",
-  "description": "Weave is an api development framework ",
+  "description": "fernjs is an api development framework ",
   "main": "index.js",
   "scripts": {
     "start": "tsc -w & nodemon --watch",
@@ -9,18 +9,26 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tulburg/weave.git"
+    "url": "git+https://github.com/tulburg/fernjs.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/@fernjs"
   },
   "keywords": [
     "Api",
-    "framework"
+    "framework",
+    "fernjs",
+    "fern",
+    "json",
+    "schema",
+    "validator"
   ],
   "author": "Tolu Oluwagbemi<demos_08_dovish@icloud.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/tulburg/weave/issues"
+    "url": "https://github.com/tulburg/fernjs/issues"
   },
-  "homepage": "https://github.com/tulburg/weave#readme",
+  "homepage": "https://github.com/tulburg/fernjs#readme",
   "devDependencies": {
     "@types/express": "^4.16.1",
     "@types/mongodb": "^4.0.7",
