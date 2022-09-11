@@ -1,5 +1,5 @@
 {
-  "name": "express",
+  "name": "fernjs",
   "version": "0.0.1",
   "description": "fernjs is an api development framework ",
   "main": "index.js",
