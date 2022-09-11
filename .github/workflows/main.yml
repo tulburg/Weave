@@ -15,6 +15,6 @@ jobs:
           registry-url: https://npm.pkg.github.com/
           scope: "@fernjs"
       - run: npm install
-      - run: pm publish
+      - run: npm publish
         env:
           NODE AUTH _TOKEN: $((secrets.GITHUB_TOKEN))
