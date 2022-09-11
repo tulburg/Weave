@@ -1,20 +1,20 @@
-name: Node.j5 Package
+name: Publis Package to npmjs
 
 on:
   push:
     branches:
       - main
 jobs:
-  publish-gpr:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
-          node-version: 12
-          registry-url: https://npm.pkg.github.com/
-          scope: "@tulburg"
+          node-version: '16.x'
+          registry-url: 'https://registry.npmjs.org'
+          scope: "@fernjs"
       - run: npm install
       - run: npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPMTOKEN }}
