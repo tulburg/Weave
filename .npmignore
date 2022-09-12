@@ -1,0 +1,5 @@
+*.ts
+.git/**
+.github/**
+node_modules/**
+.gitignore

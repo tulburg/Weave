@@ -1,11 +1,13 @@
 {
-  "name": "express",
+  "name": "@fernjs/express",
   "version": "0.0.1",
   "description": "fernjs is an api development framework ",
   "main": "index.js",
   "scripts": {
     "start": "tsc -w & nodemon --watch",
-    "test": "jest index.test.js"
+    "test": "jest index.test.js",
+    "build": "tsc",
+    "prepublish": "tsc"
   },
   "repository": {
     "type": "git",
