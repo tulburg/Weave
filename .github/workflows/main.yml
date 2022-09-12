@@ -1,4 +1,4 @@
-name: Publis Package to npmjs
+name: Publish Package to npmjs
 
 on:
   push:
@@ -15,7 +15,9 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           scope: '@fernjs'
       - run: npm ci
-      - run: npm publish --access public
+      - run: npm publish --access public & echo 'proceed'
+      - run: cd json-schema-validator/
+      - run: npm publish --access public & echo 'proceed'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPMTOKEN }}
 
