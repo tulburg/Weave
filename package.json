@@ -1,5 +1,5 @@
 {
-  "name": "express",
+  "name": "@fernjs/express",
   "version": "0.0.1",
   "description": "fernjs is an api development framework ",
   "main": "index.js",
@@ -14,7 +14,7 @@
     "url": "git+https://github.com/tulburg/fernjs.git"
   },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/@fernjs"
+    "registry": "https://registry.npmjs.org"
   },
   "keywords": [
     "Api",
