@@ -1,11 +1,8 @@
-import {LongText, ShortText} from "./src/schema";
-import {CalleeFunction, DatabaseType, SchemaType, WeaveConfiguration} from "./types";
+import {ShortText} from "./src/schema";
+import {CalleeFunction, DatabaseType, SchemaType, FernConfiguration} from "./types";
 import * as express from 'express';
 import * as core from "express-serve-static-core";
-import Mongoose from "mongoose";
-import { LeanDocument, SchemaDefinition } from 'mongoose';
 import http from 'http';
-import {CheckIfExists, FetchWhere, JSONSchemaValidator} from "./src/callable";
 import {type} from "./src/util";
 const log = (...msg: any[]) => {
   console.log('['+ new Date().toLocaleString() +'] :: ', ...msg);
@@ -18,8 +15,8 @@ declare module 'express-serve-static-core' {
   }
 }
 
-export class Weave {
-  options: WeaveConfiguration;
+export class Fern {
+  options: FernConfiguration;
   private app: any; 
   response?: core.Response;
   request?: core.Request;
@@ -37,7 +34,7 @@ export class Weave {
   }
   use: any;
 
-  constructor(options: WeaveConfiguration) {
+  constructor(options: FernConfiguration) {
     this.options = Object.assign(this.defaultOptions, options);
     if(this.options.driver === 'express') {
       this.app = express.default();
@@ -63,7 +60,7 @@ export class Weave {
     this.callee = [] as any;
   }
 
-  endpoint(path: string, method: 'POST' | 'GET' | 'DELETE'): Weave {
+  endpoint(path: string, method: 'POST' | 'GET' | 'DELETE'): Fern {
     method = method.toLowerCase() as any;
     this.app[method](path, (req: any, res: any) => {
       this.request = req;
@@ -95,8 +92,8 @@ export class Weave {
       }
       callNext();
     });
-    this.callee.push((weave: Weave) => {
-      weave.nextMethod = method as any;
+    this.callee.push((fern: Fern) => {
+      fern.nextMethod = method as any;
       return true;
     });
     return this;
@@ -144,7 +141,7 @@ export class Weave {
     return this; 
   }
 
-  useDB(pFn: (weave: Weave) => Promise<boolean>) {
+  useDB(pFn: (fern: Fern) => Promise<boolean>) {
     const fn: CalleeFunction = async () => {
       const res = await pFn(this);
       return res;
@@ -203,101 +200,6 @@ export class Weave {
 export {
   ShortText
 }
-function Schema(params: SchemaDefinition<LeanDocument<undefined>>, alt: any = {}) {
-  return new Mongoose.Schema(params, Object.assign({
-    toJSON: {
-      transform: (_: any, ret: any) => {
-        ret.id = ret._id;
-        delete ret._id;
-        delete ret.__v;
-      }
-    },
-    toObject: {
-      transform: (_: any, ret: any) => {
-        ret.id = ret._id;
-        delete ret._id;
-        delete ret.__v;
-      }
-    }
-  }, alt))
-}
-
-export const UserSchema = Schema({
-  name: String,
-  id: String,
-  email: String,
-  deviceid: String,
-}, {
-  toJSON: {
-    transform: (_: any, ret: any) => {
-      ret.id = ret._id;
-      delete ret._id;
-      delete ret.deviceid;
-      delete ret.__v;
-    }
-  }
-});
-
-Mongoose.createConnection('mongodb://127.0.0.1:27017/test',{
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  useCreateIndex: true,
-  useFindAndModify: false
-}).then(
-  (db: any) => {
-    const Api = new Weave({
-      driver: 'express',
-      dbConnection: db,
-      dbDriver: DatabaseType.MongoDB
-    });
-    // Api.use(FireWall);
-    // Api.use(Cache);
-    Api.endpoint('/login', 'POST')
-      .mapBody(['email', 'password'])
-      .useBody(JSONSchemaValidator({
-        email: (<any>ShortText).required(), 
-        password: (<any>LongText).required()
-      }))
-      .useBody((weave: Weave) => {
-        const { nextBody: body } = weave;
-        body.email = body.email + 'not working';
-        return true;
-      })
-      // .useHeader(SetToken(token => {
-      //   token.permission = 10001;
-      //   token.dependency = 10002;
-      // }))
-      // .mapDB('user', ['name', 'username', 'password'])
-      .mapDB('user', UserSchema)
-      .useDB(CheckIfExists.fromBody(['email', 'password'], () => true, () => {
-        return { code: 400, message: 'Invalid query' }
-      }))
-      // .useAuthentication('bod')
-      // .useDB(db => checkIfExists([db.name, db.gate]))
-      // .mapInputs(fromBody, ['name', 'username', 'password'])
-      // .useInputs(input => {
-      //
-      // })
-      .send({ message: 'Login succesful!' });
-    Api.endpoint('/users', 'GET')
-      // .useHeader(ValidateToken)
-      .mapDB('user', UserSchema)
-      .useDB(
-        FetchWhere.fromBody(
-          ['userid'], 
-          () => true, 
-          () => ({ code: 500, message: 'Internal error' })
-        )
-      )
-      // .useStore((store: any) => {
-      //   console.log(store.token.name);
-      // })
-      // .sendResult((data: any) => {
-      //   data.robot = robot;
-      //   return Array.from(data)
-      // });
-  } 
-)
 
 
 // Other Database functions for useDB =>
@@ -310,4 +212,4 @@ Mongoose.createConnection('mongodb://127.0.0.1:27017/test',{
 //
 
 
-export default Weave;
+export default Fern;

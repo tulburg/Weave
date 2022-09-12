@@ -1,0 +1,17 @@
+{
+  "name": "simple-login",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsc -w & nodemon --watch",
+    "link": "npm link @fernjs/express @fernjs/json-schema-validator",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "jsnative",
+  "license": "ISC",
+  "dependencies": {
+    "mongoose": "^6.6.0"
+  }
+}

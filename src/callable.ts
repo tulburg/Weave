@@ -1,12 +1,12 @@
 import {Schema, Validator} from "jsonschema";
 import * as Mongoose from "mongoose";
-import Weave from "..";
+import Fern from "..";
 import {CalleeFunction, DatabaseType} from "../types";
 import {type} from "./util";
 
-// export async function checkIfExists(weave: Weave, map: string[] | [string[]], success?: any, fail?: any) {
-//   const {dbConnection, dbDriver} = weave.options;
-//   const {nextDb} = weave;
+// export async function checkIfExists(fern: Fern, map: string[] | [string[]], success?: any, fail?: any) {
+//   const {dbConnection, dbDriver} = fern.options;
+//   const {nextDb} = fern;
 //   switch(dbDriver) {
 //     case DatabaseType.Mongoose:
 //       const db: Mongoose.Connection = dbConnection as any
@@ -45,28 +45,28 @@ export const CheckIfExists = {
   },
 
   _from: function(type: 'body' | 'params' | 'header' | 'store', args: string[], exists?: CalleeFunction, doesNotExist?: CalleeFunction) { 
-    return async (weave: Weave) => {
+    return async (fern: Fern) => {
       const source = {
-        body: weave.nextBody,
-        params: weave.nextParams,
-        header: weave.nextHeader,
-        store: weave.nextStore
+        body: fern.nextBody,
+        params: fern.nextParams,
+        header: fern.nextHeader,
+        store: fern.nextStore
       }; 
-      if(!weave.nextBody) throw "Body is not mapped";
+      if(!fern.nextBody) throw "Body is not mapped";
       else {
         const body: any = {};
         args.forEach(k => {
           body[k] = source[type][k];
         });
-        return await this._execute(weave, body, exists, doesNotExist);
+        return await this._execute(fern, body, exists, doesNotExist);
       }
     }
   },
   
-  _execute: async function(weave: Weave, params: {[key: string]: any}, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
-    if(weave.nextDb.length === 0) return false;
-    const { dbDriver, dbConnection } = weave.options;
-    const { nextDb } = weave;
+  _execute: async function(fern: Fern, params: {[key: string]: any}, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
+    if(fern.nextDb.length === 0) return false;
+    const { dbDriver, dbConnection } = fern.options;
+    const { nextDb } = fern;
     if(dbDriver === DatabaseType.MongoDB) {
       const model = dbConnection?.model(nextDb[0], nextDb[1]);
       const check = await model?.findOne(params);
@@ -100,27 +100,27 @@ export const FetchWhere = {
   },
 
   _from: function(type: 'body' | 'params' | 'header' | 'store', args: string[], exists?: CalleeFunction, doesNotExist?: CalleeFunction) { 
-    return async (weave: Weave) => {
+    return async (fern: Fern) => {
       const source = {
-        body: weave.nextBody,
-        params: weave.nextParams,
-        header: weave.nextHeader,
-        store: weave.nextStore
+        body: fern.nextBody,
+        params: fern.nextParams,
+        header: fern.nextHeader,
+        store: fern.nextStore
       }; 
-      if(!weave.nextBody) throw "Body is not mapped";
+      if(!fern.nextBody) throw "Body is not mapped";
       else {
         const body: any = {};
         args.forEach(k => {
           body[k] = source[type][k];
         });
-        return await this._execute(weave, body, exists, doesNotExist);
+        return await this._execute(fern, body, exists, doesNotExist);
       }
     }
   },
 
-  _execute: async function(weave: Weave, params: {[key: string]: any}, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
-    const { dbDriver, dbConnection } = weave.options;
-    const { nextDb } = weave;
+  _execute: async function(fern: Fern, params: {[key: string]: any}, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
+    const { dbDriver, dbConnection } = fern.options;
+    const { nextDb } = fern;
     if(dbDriver === DatabaseType.MongoDB) {
       const model = dbConnection?.model(nextDb[0], nextDb[1]);
       const get = await model?.find(params);
@@ -138,8 +138,8 @@ export const FetchWhere = {
 
 
 export function JSONSchemaValidator(keys: {[key: string]: Schema}, success?: CalleeFunction, fail?: CalleeFunction) {
-  return (weave: Weave) => {
-    const { nextParams, nextBody, nextMethod } = weave;
+  return (fern: Fern) => {
+    const { nextParams, nextBody, nextMethod } = fern;
     const validator = new Validator(), 
     parentSchema: Schema = {
       type: 'object',

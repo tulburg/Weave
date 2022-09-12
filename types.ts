@@ -1,7 +1,7 @@
 import * as Mongoose from "mongoose";
 import {LongText, ShortText} from "./src/schema";
 
-export interface WeaveConfiguration {
+export interface FernConfiguration {
   driver: 'express' | 'fastify' | 'koa',
   dbDriver?: DatabaseType
   dbConnection?: DatabaseConnection
