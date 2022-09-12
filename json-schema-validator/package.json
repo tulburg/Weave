@@ -1,10 +1,10 @@
 {
-  "name": "@fernjs/express",
-  "version": "0.0.3",
-  "description": "fernjs is an api development framework ",
+  "name": "@fernjs/json-schema-validator",
+  "version": "0.0.1",
+  "description": "JSON Schema validator for fernjs",
   "main": "index.js",
   "scripts": {
-    "start": "tsc -w & nodemon --watch",
+    "start": "tsc -w",
     "test": "jest index.test.js",
     "build": "tsc",
     "prepublish": "tsc"
@@ -29,16 +29,9 @@
   },
   "homepage": "https://github.com/tulburg/fernjs#readme",
   "devDependencies": {
-    "@types/express": "^4.16.1",
-    "@types/mongodb": "^4.0.7",
     "typescript": "^4.8.2"
   },
   "dependencies": {
-    "express": "^4.16.1",
-    "express-serve-static-core": "^0.1.1",
-    "http": "^0.0.1-security",
-    "https": "^1.0.0",
-    "jsonschema": "^1.4.1",
-    "mongoose": "^5.13.14"
+    "jsonschema": "^1.4.1"
   }
 }
