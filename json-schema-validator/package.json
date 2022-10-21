@@ -2,7 +2,7 @@
   "name": "@fernjs/json-schema-validator",
   "version": "0.0.2",
   "description": "JSON Schema validator for fernjs",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "start": "tsc -w",
     "test": "jest index.test.js",

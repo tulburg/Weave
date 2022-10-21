@@ -1,52 +1,13 @@
-import Mongoose, {SchemaDefinition, LeanDocument} from "mongoose";
+import Mongoose from "mongoose";
 import Fern from "@fernjs/express";
-import {JSONSchemaValidator} from "@fernjs/json-schema-validator";
-import {CheckIfExists, FetchWhere} from "../../src/callable";
-import {ShortText, LongText} from "../../src/schema";
-import {DatabaseType} from "../../types";
-
-
-function Schema(params: SchemaDefinition<LeanDocument<undefined>>, alt: any = {}) {
-  return new Mongoose.Schema(params, Object.assign({
-    toJSON: {
-      transform: (_: any, ret: any) => {
-        ret.id = ret._id;
-        delete ret._id;
-        delete ret.__v;
-      }
-    },
-    toObject: {
-      transform: (_: any, ret: any) => {
-        ret.id = ret._id;
-        delete ret._id;
-        delete ret.__v;
-      }
-    }
-  }, alt))
-}
-
-export const UserSchema = Schema({
-  name: String,
-  id: String,
-  email: String,
-  deviceid: String,
-}, {
-  toJSON: {
-    transform: (_: any, ret: any) => {
-      ret.id = ret._id;
-      delete ret._id;
-      delete ret.deviceid;
-      delete ret.__v;
-    }
-  }
-});
+import {JSONSchemaValidator, ShortText, LongText} from "@fernjs/json-schema-validator";
+import {CheckIfExists, FetchWhere} from "@fernjs/mongoose";
+import {UserSchema} from "./db/schema";
 
 const db = Mongoose.createConnection('mongodb://127.0.0.1:27017/test');
 
 const Api = new Fern({
-  driver: 'express',
-  dbConnection: db,
-  dbDriver: DatabaseType.MongoDB
+  dbConnection: db
 });
 // Api.use(FireWall);
 // Api.use(Cache);
@@ -79,12 +40,13 @@ Api.endpoint('/login', 'POST')
   .send({ message: 'Login succesful!' });
 Api.endpoint('/users', 'GET')
   // .useHeader(ValidateToken)
+  .mapBody(['userid'])
   .mapDB('user', UserSchema)
   .useDB(
     FetchWhere.fromBody(
       ['userid'], 
       () => true, 
-      () => ({ code: 500, message: 'Internal error' })
+      () => ({ code: 404, message: 'User not found' })
     )
   )
   // .useStore((store: any) => {

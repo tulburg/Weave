@@ -1,11 +1,8 @@
 import * as Mongoose from "mongoose";
-import {LongText, ShortText} from "./src/schema";
 
 export interface FernConfiguration {
-  driver: 'express' | 'fastify' | 'koa',
-  dbDriver?: DatabaseType
-  dbConnection?: DatabaseConnection
-  useJSON?: boolean
+  dbConnection?: DatabaseConnection,
+  driver?: 'express'
 }
 
 export enum DatabaseType {
@@ -17,5 +14,3 @@ export enum DatabaseType {
 export type CalleeFunction<T = any> = (...args: T[]) => boolean | Promise<boolean> | { code: number, message?: string, stack?: any }
 
 export type DatabaseConnection = Mongoose.Connection;
-
-export type SchemaType = typeof ShortText | typeof LongText

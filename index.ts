@@ -1,5 +1,4 @@
-import {ShortText} from "./src/schema";
-import {CalleeFunction, DatabaseType, SchemaType, FernConfiguration} from "./types";
+import {CalleeFunction, FernConfiguration} from "./types";
 import * as express from 'express';
 import * as core from "express-serve-static-core";
 import http from 'http';
@@ -21,16 +20,18 @@ export class Fern {
   response?: core.Response;
   request?: core.Request;
   callee: [CalleeFunction];
+  registry: {[key: string]: [CalleeFunction]};
 
   nextDb: any[] = [] as any;
-  nextBody: {[key: string]: SchemaType} = {} as any;
+  nextBody: {[key: string]: any} = {} as any;
   nextStore: {[key: string]: any} = {} as any;
   nextHeader: {[key: string]: any} = {} as any;
   nextParams: {[key: string]: any} = {} as any;
   nextMethod: 'post' | 'get' | 'delete' = 'get';
 
   defaultOptions = {
-    useJSON: true
+    useJSON: true,
+    driver: 'express'
   }
   use: any;
 
@@ -52,23 +53,35 @@ export class Fern {
         this.status(code).json(json);
       };
 
-      if(this.options.useJSON) this.app.use(express.json({ limit: '15mb'}));
+      // if(this.options.useJSON) this.app.use(express.json({ limit: '15mb'}));
+      this.app.use(express.json({ limit: '15mb'}));
       const server = http.createServer(this.app);
       server.listen(8080);
       log('>> Server is listening at 8080');
     }
     this.callee = [] as any;
+    this.registry = {} as any;
   }
 
   endpoint(path: string, method: 'POST' | 'GET' | 'DELETE'): Fern {
     method = method.toLowerCase() as any;
+
+    this.registry[method + ':' + path] = [] as any
+    this.callee = this.registry[method + ':' + path];
     this.app[method](path, (req: any, res: any) => {
       this.request = req;
       this.response = res;
       let index = 0;
+      this.nextBody = undefined as any;
+      this.nextMethod = method.toUpperCase() as any;
+      this.nextParams = undefined as any;
+      this.nextDb = undefined as any;
+      this.nextStore = undefined as any;
+      this.nextHeader = undefined as any;
+      const callee = this.registry[method + ':' + path];
       const callNext = () => {
-        if(index < this.callee.length) {
-          const fn = this.callee[index];
+        if(index < callee.length) {
+          const fn = callee[index];
           const res = fn(this);
           if(type(res) === 'promise') {
             (<Promise<boolean>>res).then((v: boolean | { code: number, message?: string, stack?: any }) => {
@@ -76,7 +89,7 @@ export class Fern {
                 index++;
                 callNext();
               }else {
-                if(!v) this.response?.sendError(500, 'Function failed');
+                if(!v) this.response?.sendError(500, 'FernError: Function failed');
                 else this.response?.sendError(v.code, v.message as string, v.stack);
               }
             })
@@ -85,7 +98,7 @@ export class Fern {
             callNext();
           } else {
             const result = res as { code: number, message?: string, stack?: any };
-            if(!res) this.response?.sendError(500, 'Function failed');
+            if(!res) this.response?.sendError(500, 'FernError: Function failed');
             else this.response?.sendError(result.code, result.message as string, result.stack);
           };   
         }
@@ -104,14 +117,16 @@ export class Fern {
       if(!this.request?.body) return {
         code: 400, message: 'Invalid request'
       }
+      let checks = 0;
       keys.forEach(k => {
-        if(!this.request?.body.hasOwnProperty(k)) {
-          return { code: 403, message: 'Bad request' };
-        }else {
+        if(this.request?.body.hasOwnProperty(k)) {
+          this.nextBody = this.nextBody || {} as any;
           this.nextBody[k] = this.request?.body[k];
+          checks++;
         }
-      }); 
-      return true;
+      });
+      if(checks === keys.length - 1) true;
+      return { code: 403, message: 'Bad Request'}
     }
     this.callee.push(fn);
     return this;
@@ -132,9 +147,7 @@ export class Fern {
 
   mapDB (...args: any[]) {
     const fn: CalleeFunction = () => {
-      if(this.options.dbDriver === DatabaseType.MongoDB) {
-        this.nextDb = args;
-      }
+      this.nextDb = args;
       return true;
     }
     this.callee.push(fn);
@@ -143,7 +156,10 @@ export class Fern {
 
   useDB(pFn: (fern: Fern) => Promise<boolean>) {
     const fn: CalleeFunction = async () => {
-      const res = await pFn(this);
+      let res = false;
+      try {
+        res = await pFn(this);
+      }catch(e) { log(e) };
       return res;
     }
     this.callee.push(fn);
@@ -194,13 +210,6 @@ export class Fern {
 
   
 }
-
-
-
-export {
-  ShortText
-}
-
 
 // Other Database functions for useDB =>
 // CheckIfExists
