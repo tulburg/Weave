@@ -1,11 +1,11 @@
 {
-  "name": "@fernjs/express",
-  "version": "0.0.3",
-  "description": "fernjs is an api development framework ",
+  "name": "@fernjs/jsonwebtoken",
+  "version": "0.0.2",
+  "description": "JsonWebToken validator for fernjs",
   "main": "dist/index.js",
   "scripts": {
-    "start": "tsc -w & nodemon --watch",
-    "test": "jest dist/index.test.js",
+    "start": "tsc -w",
+    "test": "jest index.test.js",
     "build": "tsc",
     "prepublish": "tsc"
   },
@@ -18,8 +18,7 @@
     "framework",
     "fernjs",
     "fern",
-    "json",
-    "schema",
+    "jsonwebtoken",
     "validator"
   ],
   "author": "Tolu Oluwagbemi<demos_08_dovish@icloud.com>",
@@ -29,17 +28,9 @@
   },
   "homepage": "https://github.com/tulburg/fernjs#readme",
   "devDependencies": {
-    "@types/express": "^4.16.1",
-    "@types/mongodb": "^4.0.7",
-    "@types/node": "^18.11.5",
     "typescript": "^4.8.2"
   },
   "dependencies": {
-    "express": "^4.16.1",
-    "express-serve-static-core": "^0.1.1",
-    "http": "^0.0.1-security",
-    "https": "^1.0.0",
-    "jsonschema": "^1.4.1",
-    "mongoose": "^5.13.14"
+    "jsonwebtoken": "^8.5.1"
   }
 }

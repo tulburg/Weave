@@ -31,7 +31,8 @@ export class Fern {
 
   defaultOptions = {
     useJSON: true,
-    driver: 'express'
+    driver: 'express',
+    port: 8000
   }
   use: any;
 
@@ -39,7 +40,7 @@ export class Fern {
     this.options = Object.assign(this.defaultOptions, options);
     if(this.options.driver === 'express') {
       this.app = express.default();
-      this.use = this.app.use;
+      this.use = this.app.use.bind(this.app);
       this.app.response.sendOk = function (json: {[key: string]: any}) {
         log('Send => ', 200);
         json.status = 200;
@@ -56,8 +57,8 @@ export class Fern {
       // if(this.options.useJSON) this.app.use(express.json({ limit: '15mb'}));
       this.app.use(express.json({ limit: '15mb'}));
       const server = http.createServer(this.app);
-      server.listen(8080);
-      log('>> Server is listening at 8080');
+      server.listen(options.port);
+      log(`>> Server is listening at ${options.port}`);
     }
     this.callee = [] as any;
     this.registry = {} as any;
@@ -76,7 +77,7 @@ export class Fern {
       this.nextMethod = method.toUpperCase() as any;
       this.nextParams = undefined as any;
       this.nextDb = undefined as any;
-      this.nextStore = undefined as any;
+      this.nextStore = {} as any;
       this.nextHeader = undefined as any;
       const callee = this.registry[method + ':' + path];
       const callNext = () => {
@@ -100,7 +101,7 @@ export class Fern {
             const result = res as { code: number, message?: string, stack?: any };
             if(!res) this.response?.sendError(500, 'FernError: Function failed');
             else this.response?.sendError(result.code, result.message as string, result.stack);
-          };   
+          }; 
         }
       }
       callNext();
@@ -112,7 +113,7 @@ export class Fern {
     return this;
   }
 
-  mapBody(keys: string[]) {
+  mapBody(keys: string[], success?: CalleeFunction, fail?: CalleeFunction) {
     const fn: CalleeFunction = () => {
       if(!this.request?.body) return {
         code: 400, message: 'Invalid request'
@@ -125,14 +126,72 @@ export class Fern {
           checks++;
         }
       });
-      if(checks === keys.length - 1) true;
-      return { code: 403, message: 'Bad Request'}
+      if(checks === keys.length) return success ? success(true) : true;
+      return fail ? fail({ code: 403, message: 'Bad Request'}) : { code: 403, message: 'Bad Request'};
     }
     this.callee.push(fn);
     return this;
   }
 
   useBody(callback?: CalleeFunction) {
+    const fn = () => {
+      if(callback) return callback(this);
+      else return true;
+    }
+    this.callee.push(fn as CalleeFunction);
+    return this;
+  }
+
+  mapParams(keys: string[], success?: CalleeFunction, fail?: CalleeFunction) {
+    const fn: CalleeFunction = () => {
+      if(!this.request?.params) return {
+        code: 400, message: 'Invalid request'
+      }
+      let checks = 0;
+      keys.forEach(k => {
+        if(this.request?.body.hasOwnProperty(k)) {
+          this.nextParams = this.nextParams || {} as any;
+          this.nextParams[k] = this.request?.params[k];
+          checks++;
+        }
+      });
+      if(checks === keys.length) return success ? success(true) : true;
+      return fail ? fail({ code: 403, message: 'Bad Request'}) : { code: 403, message: 'Bad Request'};
+    }
+    this.callee.push(fn);
+    return this;
+  }
+
+  useParams(callback?: CalleeFunction) {
+    const fn = () => {
+      if(callback) return callback(this);
+      else return true;
+    }
+    this.callee.push(fn as CalleeFunction);
+    return this;
+  }
+
+  mapHeader(keys: string[], success?: CalleeFunction, fail?: CalleeFunction) {
+    const fn: CalleeFunction = () => {
+      if(!this.request?.headers) return {
+        code: 400, message: 'Invalid request'
+      }
+      let checks = 0;
+      keys.forEach(k => {
+        if(this.request?.headers.hasOwnProperty(k)) {
+          this.nextHeader = this.nextHeader || {} as any;
+          this.nextHeader[k] = this.request?.headers[k];
+          checks++;
+        }
+      });
+      if(checks === keys.length) return success ? success(true) : true;
+      return fail ? fail({ code: 403, message: 'Bad Request'}) : { code: 403, message: 'Bad Request'};
+    }
+    this.callee.push(fn);
+    return this;
+  }
+
+  useHeader(callback?: CalleeFunction) {
     const fn = () => {
       if(callback) return callback(this);
       else return true;
@@ -191,9 +250,10 @@ export class Fern {
   //   return this;
   // }
 
-  send(data: string | { message: string } | any) {
+  send(data: string | { message: string } | any | ((fern: Fern) => string | { message: string } | any)) {
     const fn: CalleeFunction = () => {
-      this.response?.sendOk(data);
+      if(typeof data === 'function') this.response?.sendOk(data(this))
+      else this.response?.sendOk(data);
       return true;
     };
     this.callee.push(fn);
