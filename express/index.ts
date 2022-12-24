@@ -1,32 +1,33 @@
-import {CalleeFunction, FernConfiguration} from "./types";
+import { CalleeFunction, FernConfiguration } from "./types";
 import * as express from 'express';
 import * as core from "express-serve-static-core";
 import http from 'http';
-import {type} from "./src/util";
+import { type } from "./src/util";
 const log = (...msg: any[]) => {
-  console.log('['+ new Date().toLocaleString() +'] :: ', ...msg);
+  console.log('[' + new Date().toLocaleString() + '] :: ', ...msg);
 }
 
 declare module 'express-serve-static-core' {
   export interface Response {
-    sendOk: (json: {[key: string]: any}) => void;
-    sendError: (code: number, message: string, stack?: string | any) => void;
+    sendOk: (json: { [key: string]: any }) => void;
+    sendError: (object: any) => void;
   }
 }
 
 export class Fern {
   options: FernConfiguration;
-  private app: any; 
+  private app: any;
   response?: core.Response;
   request?: core.Request;
   callee: [CalleeFunction];
-  registry: {[key: string]: [CalleeFunction]};
+  registry: { [key: string]: [CalleeFunction] };
 
   nextDb: any[] = [] as any;
-  nextBody: {[key: string]: any} = {} as any;
-  nextStore: {[key: string]: any} = {} as any;
-  nextHeader: {[key: string]: any} = {} as any;
-  nextParams: {[key: string]: any} = {} as any;
+  nextBody: { [key: string]: any } = {} as any;
+  nextStore: { [key: string]: any } = {} as any;
+  nextHeader: { [key: string]: any } = {} as any;
+  nextParams: { [key: string]: any } = {} as any;
+  nextQuery: { [key: string]: any } = {} as any;
   nextMethod: 'post' | 'get' | 'delete' = 'get';
 
   defaultOptions = {
@@ -38,27 +39,27 @@ export class Fern {
 
   constructor(options: FernConfiguration) {
     this.options = Object.assign(this.defaultOptions, options);
-    if(this.options.driver === 'express') {
+    if (this.options.driver === 'express') {
       this.app = express.default();
       this.use = this.app.use.bind(this.app);
-      this.app.response.sendOk = function (json: {[key: string]: any}) {
-        log('Send => ', 200);
+      this.app.response.sendOk = function (json: { [key: string]: any }) {
+        log('Send => ', 200, json);
         json.status = 200;
         this.status(200).json(json);
       };
 
-      this.app.response.sendError = function (code: number, message: string, stack?: string) {
-        const json: any = stack ? {message: message, stack: stack} : {message: message};
-        log('Send => ', code, message);
-        json.status = code;
-        this.status(code).json(json);
+      this.app.response.sendError = function (object: any) {
+        const json: any = object;
+        log('Send => ', object.code, json);
+        json.status = object.code;
+        this.status(object.code).json(json);
       };
 
       // if(this.options.useJSON) this.app.use(express.json({ limit: '15mb'}));
-      this.app.use(express.json({ limit: '15mb'}));
+      this.app.use(express.json({ limit: '15mb' }));
       const server = http.createServer(this.app);
-      server.listen(options.port);
-      log(`>> Server is listening at ${options.port}`);
+      server.listen(options.port || 8000);
+      log(`>>  listening at ${options.port || 8000}`);
     }
     this.callee = [] as any;
     this.registry = {} as any;
@@ -76,32 +77,35 @@ export class Fern {
       this.nextBody = undefined as any;
       this.nextMethod = method.toUpperCase() as any;
       this.nextParams = undefined as any;
+      this.nextQuery = undefined as any;
       this.nextDb = undefined as any;
       this.nextStore = {} as any;
       this.nextHeader = undefined as any;
       const callee = this.registry[method + ':' + path];
       const callNext = () => {
-        if(index < callee.length) {
+        if (index < callee.length) {
           const fn = callee[index];
           const res = fn(this);
-          if(type(res) === 'promise') {
+          if (type(res) === 'promise') {
             (<Promise<boolean>>res).then((v: boolean | { code: number, message?: string, stack?: any }) => {
-              if(v === true) {
+              if (v === true) {
                 index++;
                 callNext();
-              }else {
-                if(!v) this.response?.sendError(500, 'FernError: Function failed');
-                else this.response?.sendError(v.code, v.message as string, v.stack);
+              } else {
+                if (!v) this.response?.sendError({ code: 500, message: 'FernError: Function failed' });
+                else if (v.code !== 200) this.response?.sendError(v);
+                else this.response?.sendOk(v);
               }
             })
-          } else if(res === true) {
+          } else if (res === true) {
             index++;
             callNext();
           } else {
             const result = res as { code: number, message?: string, stack?: any };
-            if(!res) this.response?.sendError(500, 'FernError: Function failed');
-            else this.response?.sendError(result.code, result.message as string, result.stack);
-          }; 
+            if (!res) this.response?.sendError({ code: 500, message: 'FernError: Function failed' });
+            else if (result.code !== 200) this.response?.sendError(result);
+            else this.response?.sendOk(result);
+          };
         }
       }
       callNext();
@@ -115,19 +119,19 @@ export class Fern {
 
   mapBody(keys: string[], success?: CalleeFunction, fail?: CalleeFunction) {
     const fn: CalleeFunction = () => {
-      if(!this.request?.body) return {
+      if (!this.request?.body) return {
         code: 400, message: 'Invalid request'
       }
       let checks = 0;
       keys.forEach(k => {
-        if(this.request?.body.hasOwnProperty(k)) {
+        if (this.request?.body.hasOwnProperty(k)) {
           this.nextBody = this.nextBody || {} as any;
           this.nextBody[k] = this.request?.body[k];
           checks++;
         }
       });
-      if(checks === keys.length) return success ? success(true) : true;
-      return fail ? fail({ code: 403, message: 'Bad Request'}) : { code: 403, message: 'Bad Request'};
+      if (checks === keys.length) return success ? success(true) : true;
+      return fail ? fail({ code: 403, message: 'Bad Request' }) : { code: 403, message: 'Bad Request' };
     }
     this.callee.push(fn);
     return this;
@@ -135,7 +139,7 @@ export class Fern {
 
   useBody(callback?: CalleeFunction) {
     const fn = () => {
-      if(callback) return callback(this);
+      if (callback) return callback(this);
       else return true;
     }
     this.callee.push(fn as CalleeFunction);
@@ -144,19 +148,19 @@ export class Fern {
 
   mapParams(keys: string[], success?: CalleeFunction, fail?: CalleeFunction) {
     const fn: CalleeFunction = () => {
-      if(!this.request?.params) return {
+      if (!this.request?.params) return {
         code: 400, message: 'Invalid request'
       }
       let checks = 0;
       keys.forEach(k => {
-        if(this.request?.body.hasOwnProperty(k)) {
+        if (this.request?.params.hasOwnProperty(k)) {
           this.nextParams = this.nextParams || {} as any;
           this.nextParams[k] = this.request?.params[k];
           checks++;
         }
       });
-      if(checks === keys.length) return success ? success(true) : true;
-      return fail ? fail({ code: 403, message: 'Bad Request'}) : { code: 403, message: 'Bad Request'};
+      if (checks === keys.length) return success ? success(true) : true;
+      return fail ? fail({ code: 403, message: 'Bad Request' }) : { code: 403, message: 'Bad Request' };
     }
     this.callee.push(fn);
     return this;
@@ -164,7 +168,36 @@ export class Fern {
 
   useParams(callback?: CalleeFunction) {
     const fn = () => {
-      if(callback) return callback(this);
+      if (callback) return callback(this);
+      else return true;
+    }
+    this.callee.push(fn as CalleeFunction);
+    return this;
+  }
+
+  mapQuery(keys: string[], success?: CalleeFunction, fail?: CalleeFunction) {
+    const fn: CalleeFunction = () => {
+      if (!this.request?.query) return {
+        code: 400, message: 'Invalid request'
+      }
+      let checks = 0;
+      keys.forEach(k => {
+        if (this.request?.query.hasOwnProperty(k)) {
+          this.nextQuery = this.nextQuery || {} as any;
+          this.nextQuery[k] = this.request?.query[k];
+          checks++;
+        }
+      });
+      if (checks === keys.length) return success ? success(true) : true;
+      return fail ? fail({ code: 403, message: 'Bad Request' }) : { code: 403, message: 'Bad Request' };
+    }
+    this.callee.push(fn);
+    return this;
+  }
+
+  useQuery(callback?: CalleeFunction) {
+    const fn = () => {
+      if (callback) return callback(this);
       else return true;
     }
     this.callee.push(fn as CalleeFunction);
@@ -173,19 +206,19 @@ export class Fern {
 
   mapHeader(keys: string[], success?: CalleeFunction, fail?: CalleeFunction) {
     const fn: CalleeFunction = () => {
-      if(!this.request?.headers) return {
+      if (!this.request?.headers) return {
         code: 400, message: 'Invalid request'
       }
       let checks = 0;
       keys.forEach(k => {
-        if(this.request?.headers.hasOwnProperty(k)) {
+        if (this.request?.headers.hasOwnProperty(k)) {
           this.nextHeader = this.nextHeader || {} as any;
           this.nextHeader[k] = this.request?.headers[k];
           checks++;
         }
       });
-      if(checks === keys.length) return success ? success(true) : true;
-      return fail ? fail({ code: 403, message: 'Bad Request'}) : { code: 403, message: 'Bad Request'};
+      if (checks === keys.length) return success ? success(true) : true;
+      return fail ? fail({ code: 403, message: 'Bad Request' }) : { code: 403, message: 'Bad Request' };
     }
     this.callee.push(fn);
     return this;
@@ -193,7 +226,7 @@ export class Fern {
 
   useHeader(callback?: CalleeFunction) {
     const fn = () => {
-      if(callback) return callback(this);
+      if (callback) return callback(this);
       else return true;
     }
     this.callee.push(fn as CalleeFunction);
@@ -204,13 +237,13 @@ export class Fern {
   // useHeader
   // useStore
 
-  mapDB (...args: any[]) {
+  mapDB(...args: any[]) {
     const fn: CalleeFunction = () => {
       this.nextDb = args;
       return true;
     }
     this.callee.push(fn);
-    return this; 
+    return this;
   }
 
   useDB(pFn: (fern: Fern) => Promise<boolean>) {
@@ -218,7 +251,7 @@ export class Fern {
       let res = false;
       try {
         res = await pFn(this);
-      }catch(e) { log(e) };
+      } catch (e) { log(e) };
       return res;
     }
     this.callee.push(fn);
@@ -250,15 +283,24 @@ export class Fern {
   //   return this;
   // }
 
+  useStore(callback?: CalleeFunction) {
+    const fn = () => {
+      if (callback) return callback(this);
+      else return true;
+    }
+    this.callee.push(fn as CalleeFunction);
+    return this;
+  }
+
   send(data: string | { message: string } | any | ((fern: Fern) => string | { message: string } | any)) {
     const fn: CalleeFunction = () => {
-      if(typeof data === 'function') this.response?.sendOk(data(this))
+      if (typeof data === 'function') this.response?.sendOk(data(this))
       else this.response?.sendOk(data);
       return true;
     };
     this.callee.push(fn);
   }
- 
+
   //
   // useDB(callable: (map: string[] | [string[]], success: any, fail: any) => any, map: string[] | [string[]], success: any, fail: any) {
   //   callable(map, success, fail);
@@ -268,7 +310,7 @@ export class Fern {
   //
   // }
 
-  
+
 }
 
 // Other Database functions for useDB =>
