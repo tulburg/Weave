@@ -2,10 +2,16 @@ import { CalleeFunction, FernConfiguration } from "./types";
 import * as express from 'express';
 import * as core from "express-serve-static-core";
 import http from 'http';
+import chalk from 'chalk';
+
 import { type } from "./src/util";
+
+const oldLog = global.console.log;
 const log = (...msg: any[]) => {
-  console.log('[' + new Date().toLocaleString() + '] :: ', ...msg);
+  oldLog('[' + new Date().toLocaleString() + '] :: ', ...msg);
 }
+var console = { ...global.console, log }
+global.console = console;
 
 declare module 'express-serve-static-core' {
   export interface Response {
@@ -17,6 +23,7 @@ declare module 'express-serve-static-core' {
 export class Fern {
   options: FernConfiguration;
   private app: any;
+  private server: any;
   response?: core.Response;
   request?: core.Request;
   callee: [CalleeFunction];
@@ -43,22 +50,22 @@ export class Fern {
       this.app = express.default();
       this.use = this.app.use.bind(this.app);
       this.app.response.sendOk = function (json: { [key: string]: any }) {
-        log('Send => ', 200, json);
+        log(chalk.green('Send => '), 200, json);
         json.status = 200;
         this.status(200).json(json);
       };
 
       this.app.response.sendError = function (object: any) {
         const json: any = object;
-        log('Send => ', object.code, json);
+        log(chalk.red('Send => '), object.code, json);
         json.status = object.code;
         this.status(object.code).json(json);
       };
 
       // if(this.options.useJSON) this.app.use(express.json({ limit: '15mb'}));
       this.app.use(express.json({ limit: '15mb' }));
-      const server = http.createServer(this.app);
-      server.listen(options.port || 8000);
+      this.server = http.createServer(this.app);
+      this.server.listen(options.port || 8000);
       log(`>>  listening at ${options.port || 8000}`);
     }
     this.callee = [] as any;
@@ -71,6 +78,7 @@ export class Fern {
     this.registry[method + ':' + path] = [] as any
     this.callee = this.registry[method + ':' + path];
     this.app[method](path, (req: any, res: any) => {
+      log(chalk.magenta('Receive => ') + method + ':' + path);
       this.request = req;
       this.response = res;
       let index = 0;
@@ -139,7 +147,7 @@ export class Fern {
 
   useBody(callback?: CalleeFunction) {
     const fn = () => {
-      if (callback) return callback(this);
+      if (callback) return callback(this.nextBody, this);
       else return true;
     }
     this.callee.push(fn as CalleeFunction);
@@ -168,7 +176,7 @@ export class Fern {
 
   useParams(callback?: CalleeFunction) {
     const fn = () => {
-      if (callback) return callback(this);
+      if (callback) return callback(this.nextParams, this);
       else return true;
     }
     this.callee.push(fn as CalleeFunction);
@@ -197,7 +205,7 @@ export class Fern {
 
   useQuery(callback?: CalleeFunction) {
     const fn = () => {
-      if (callback) return callback(this);
+      if (callback) return callback(this.nextQuery, this);
       else return true;
     }
     this.callee.push(fn as CalleeFunction);
@@ -226,7 +234,7 @@ export class Fern {
 
   useHeader(callback?: CalleeFunction) {
     const fn = () => {
-      if (callback) return callback(this);
+      if (callback) return callback(this.nextHeader, this);
       else return true;
     }
     this.callee.push(fn as CalleeFunction);
@@ -246,11 +254,11 @@ export class Fern {
     return this;
   }
 
-  useDB(pFn: (fern: Fern) => Promise<boolean>) {
+  useDB(pFn: (db: any[], fern: Fern) => Promise<boolean>) {
     const fn: CalleeFunction = async () => {
       let res = false;
       try {
-        res = await pFn(this);
+        res = await pFn(this.nextDb, this);
       } catch (e) { log(e) };
       return res;
     }
@@ -285,7 +293,7 @@ export class Fern {
 
   useStore(callback?: CalleeFunction) {
     const fn = () => {
-      if (callback) return callback(this);
+      if (callback) return callback(this.nextStore, this);
       else return true;
     }
     this.callee.push(fn as CalleeFunction);

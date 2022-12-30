@@ -23,7 +23,7 @@ const part = {
   },
 
   _from: function (type: 'body' | 'params' | 'header' | 'store' | 'query', args: string[], exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
-    return (fern: Fern) => {
+    return (_: any[], fern: Fern) => {
       const source = {
         body: fern.nextBody,
         params: fern.nextParams,
@@ -118,6 +118,18 @@ export const Insert = Object.assign({
     const { nextDb } = fern;
     const Model: any = dbConnection?.model(nextDb[0], nextDb[1]);
     const create = await new Model(params).save();
+    if (create) {
+      return success ? success(true) : true;
+    } else return fail ? fail(false) : false;
+  }
+}, part);
+
+export const InsertMany = Object.assign({
+  _execute: async function (fern: Fern, params: { [key: string]: any }, success?: CalleeFunction, fail?: CalleeFunction) {
+    const { dbConnection } = fern.options;
+    const { nextDb } = fern;
+    const model: any = dbConnection?.model(nextDb[0], nextDb[1]);
+    const create = await model.insertMany(Object.values(params).flat());
     if (create) {
       return success ? success(true) : true;
     } else return fail ? fail(false) : false;
