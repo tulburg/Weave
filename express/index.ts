@@ -6,12 +6,20 @@ import chalk from 'chalk';
 
 import { type } from "./src/util";
 
-const oldLog = global.console.log;
-const log = (...msg: any[]) => {
-  oldLog('[' + new Date().toLocaleString() + '] :: ', ...msg);
+
+const oldConsole = global.console;
+global.console = {
+  ...global.console,
+  log: (...msg: any[]) => {
+    oldConsole.log('[' + new Date().toLocaleString() + '] :: ', ...msg);
+  },
+  error: (...msg: any[]) => {
+    oldConsole.error(chalk.red('[' + new Date().toLocaleString() + '] :: '), ...msg);
+  }
 }
-var console = { ...global.console, log }
-global.console = console;
+
+
+const log = console.log;
 
 declare module 'express-serve-static-core' {
   export interface Response {

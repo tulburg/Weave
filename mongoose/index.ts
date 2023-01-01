@@ -31,7 +31,7 @@ const part = {
         store: fern.nextStore,
         query: fern.nextQuery
       };
-      if (!source) throw "Source (" + type + ") is not mapped";
+      if (!source[type]) throw "Source (" + type + ") is not mapped";
       else {
         const body: any = {};
         args.forEach(k => {
