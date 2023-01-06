@@ -61,6 +61,11 @@ export const CheckIfExists = Object.assign({
 }, part);
 
 export const FetchWhere = Object.assign({
+  rawParams: function (params: any, success?: CalleeFunction, fail?: CalleeFunction) {
+    return (fern: Fern) => {
+      this._execute(fern, params, success, fail)
+    }
+  },
   _execute: async function (fern: Fern, params: { [key: string]: any }, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
     const { dbConnection } = fern.options;
     const { nextDb } = fern;
@@ -116,10 +121,10 @@ export const Insert = Object.assign({
   _execute: async function (fern: Fern, params: { [key: string]: any }, success?: CalleeFunction, fail?: CalleeFunction) {
     const { dbConnection } = fern.options;
     const { nextDb } = fern;
-    const Model: any = dbConnection?.model(nextDb[0], nextDb[1]);
-    const create = await new Model(params).save();
+    const model: any = dbConnection?.model(nextDb[0], nextDb[1]);
+    const create = await model.create(params);
     if (create) {
-      return success ? success(true) : true;
+      return success ? success(create) : true;
     } else return fail ? fail(false) : false;
   }
 }, part);
