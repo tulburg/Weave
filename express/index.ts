@@ -50,9 +50,7 @@ export class Fern {
   defaultOptions = {
     useJSON: true,
     driver: 'express',
-    port: 8000,
-    sslCert: undefined,
-    sslKey: undefined
+    port: 8000
   }
   use: any;
 
