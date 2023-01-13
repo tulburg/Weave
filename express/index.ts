@@ -1,7 +1,9 @@
 import { CalleeFunction, FernConfiguration } from "./types";
 import * as express from 'express';
 import * as core from "express-serve-static-core";
+import fs from 'fs';
 import http from 'http';
+import https from 'https';
 import chalk from 'chalk';
 
 import { type } from "./src/util";
@@ -48,7 +50,9 @@ export class Fern {
   defaultOptions = {
     useJSON: true,
     driver: 'express',
-    port: 8000
+    port: 8000,
+    sslCert: undefined,
+    sslKey: undefined
   }
   use: any;
 
@@ -72,7 +76,10 @@ export class Fern {
 
       // if(this.options.useJSON) this.app.use(express.json({ limit: '15mb'}));
       this.app.use(express.json({ limit: '15mb' }));
-      this.server = http.createServer(this.app);
+      this.server = this.options.sslCert ? https.createServer({
+        key: fs.readFileSync(this.options.sslKey as string),
+        cert: fs.readFileSync(this.options.sslCert)
+      }, this.app) : http.createServer(this.app);
       this.server.listen(options.port || 8000);
       log(`>>  listening at ${options.port || 8000}`);
     }

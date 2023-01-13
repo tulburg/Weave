@@ -1,6 +1,6 @@
 {
   "name": "@fernjs/mongoose",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Fern js mongoose data callbacks",
   "main": "dist/index.js",
   "scripts": {

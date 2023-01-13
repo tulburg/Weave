@@ -81,6 +81,27 @@ export const FetchWhere = Object.assign({
   }
 }, part);
 
+export const Count = Object.assign({
+  rawParams: function (params: any, success?: CalleeFunction, fail?: CalleeFunction) {
+    return (fern: Fern) => {
+      this._execute(fern, params, success, fail)
+    }
+  },
+  _execute: async function (fern: Fern, params: { [key: string]: any }, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
+    const { dbConnection } = fern.options;
+    const { nextDb } = fern;
+    const model = dbConnection?.model(nextDb[0], nextDb[1]);
+    const get = await model?.count(params);
+    if (get) {
+      if (exists) return exists(get);
+      else return true;
+    } else {
+      if (doesNotExist) return doesNotExist();
+      else return false;
+    }
+  }
+}, part);
+
 export const FetchOne = Object.assign({
   _execute: async function (fern: Fern, params: { [key: string]: any }, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
     const { dbConnection } = fern.options;
@@ -141,54 +162,52 @@ export const InsertMany = Object.assign({
   }
 }, part);
 
-export const InsertOrUpdate = Object.assign({
-  clause: undefined,
-  Where: function (clause: string[]) {
-    this.clause = clause;
-    return this;
-  },
-  _execute: async function (fern: Fern, params: { [key: string]: any }, success?: CalleeFunction, fail?: CalleeFunction) {
-    const { dbConnection } = fern.options;
-    const { nextDb } = fern;
-    const clause: any = {};
-    Object.keys(params).forEach((key: string) => {
-      if (this.clause.indexOf(key) > -1) {
-        clause[key] = params[key];
-        delete params[key];
-      }
-    });
-    const model: any = dbConnection?.model(nextDb[0], nextDb[1]);
-    const update = await model.updateOne(clause, params, { upsert: true });
-    if (update) {
-      return success ? success(true) : true;
-    } else return fail ? fail(false) : false;
+export const InsertOrUpdateWhere = (clause: string[]) => {
+  const main: any = {
+    _execute: async function (fern: Fern, params: { [key: string]: any }, success?: CalleeFunction, fail?: CalleeFunction) {
+      const { dbConnection } = fern.options;
+      const { nextDb } = fern;
+      const clause: any = {};
+      Object.keys(params).forEach((key: string) => {
+        if (this.clause.indexOf(key) > -1) {
+          clause[key] = params[key];
+          delete params[key];
+        }
+      });
+      const model: any = dbConnection?.model(nextDb[0], nextDb[1]);
+      const update = await model.updateOne(clause, params, { upsert: true });
+      if (update) {
+        return success ? success(true) : true;
+      } else return fail ? fail(false) : false;
+    }
   }
-}, part);
+  main.clause = clause;
+  return Object.assign(main, part)
+};
 
 
-export const Update = Object.assign({
-  clause: undefined,
-  Where: function (clause: string[]) {
-    this.clause = clause;
-    return this;
-  },
-  _execute: async function (fern: Fern, params: { [key: string]: any }, success?: CalleeFunction, fail?: CalleeFunction) {
-    const { dbConnection } = fern.options;
-    const { nextDb } = fern;
-    const clause: any = {};
-    Object.keys(params).forEach((key: string) => {
-      if (this.clause.indexOf(key) > -1) {
-        clause[key] = params[key];
-        delete params[key];
-      }
-    });
-    const model: any = dbConnection?.model(nextDb[0], nextDb[1]);
-    const update = await model.updateOne(clause, params);
-    if (update) {
-      return success ? success(true) : true;
-    } else return fail ? fail(false) : false;
-  }
-}, part);
+export const UpdateWhere = (clause: string[]) => {
+  const main: any = {
+    _execute: async function (fern: Fern, params: { [key: string]: any }, success?: CalleeFunction, fail?: CalleeFunction) {
+      const { dbConnection } = fern.options;
+      const { nextDb } = fern;
+      const clause: any = {};
+      Object.keys(params).forEach((key: string) => {
+        if (this.clause.indexOf(key) > -1) {
+          clause[key] = params[key];
+          delete params[key];
+        }
+      });
+      const model: any = dbConnection?.model(nextDb[0], nextDb[1]);
+      const update = await model.updateOne(clause, params);
+      if (update) {
+        return success ? success(true) : true;
+      } else return fail ? fail(false) : false;
+    }
+  };
+  main.clause = clause;
+  return Object.assign(main, part)
+};
 
 export const DeleteOne = Object.assign({
   _execute: async function (fern: Fern, params: { [key: string]: any }, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
