@@ -1,5 +1,6 @@
-import Fern from "@fernjs/express";
-import { CalleeFunction } from "@fernjs/express/types";
+type Fern = any;
+type CalleeFunction<T = any> = (...args: T[]) => boolean | Promise<boolean | { code: number, message?: string, stack?: any }> | { code: number, message?: string, stack?: any }
+
 
 const part = {
   fromBody: function (args: string[], exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
@@ -51,10 +52,10 @@ export const CheckIfExists = Object.assign({
     const model = dbConnection?.model(nextDb[0], nextDb[1]);
     const check = await model?.findOne(params);
     if (check) {
-      if (exists) return exists();
+      if (exists) return exists(fern);
       else return true;
     } else {
-      if (doesNotExist) return doesNotExist();
+      if (doesNotExist) return doesNotExist(fern);
       else return false;
     }
   }
@@ -72,10 +73,10 @@ export const FetchWhere = Object.assign({
     const model = dbConnection?.model(nextDb[0], nextDb[1]);
     const get = await model?.find(params);
     if (get && get.length > 0) {
-      if (exists) return exists(get);
+      if (exists) return exists(get, fern);
       else return true;
     } else {
-      if (doesNotExist) return doesNotExist();
+      if (doesNotExist) return doesNotExist(fern);
       else return false;
     }
   }
@@ -93,10 +94,10 @@ export const Count = Object.assign({
     const model = dbConnection?.model(nextDb[0], nextDb[1]);
     const get = await model?.count(params);
     if (get) {
-      if (exists) return exists(get);
+      if (exists) return exists(get, fern);
       else return true;
     } else {
-      if (doesNotExist) return doesNotExist();
+      if (doesNotExist) return doesNotExist(fern);
       else return false;
     }
   }
@@ -109,10 +110,10 @@ export const FetchOne = Object.assign({
     const model = dbConnection?.model(nextDb[0], nextDb[1]);
     const get = await model?.findOne(params);
     if (get) {
-      if (exists) return exists(get);
+      if (exists) return exists(get, fern);
       else return true;
     } else {
-      if (doesNotExist) return doesNotExist();
+      if (doesNotExist) return doesNotExist(fern);
       else return false;
     }
   }
@@ -133,8 +134,8 @@ export const Fetch = {
       : model?.find({}));
     if (get) {
       fern.nextStore = get;
-      return success ? success(get) : true;
-    } else return fail ? fail(false) : false;
+      return success ? success(get, fern) : true;
+    } else return fail ? fail(false, fern) : false;
   }
 }
 
@@ -145,8 +146,8 @@ export const Insert = Object.assign({
     const model: any = dbConnection?.model(nextDb[0], nextDb[1]);
     const create = await model.create(params);
     if (create) {
-      return success ? success(create) : true;
-    } else return fail ? fail(false) : false;
+      return success ? success(create, fern) : true;
+    } else return fail ? fail(false, fern) : false;
   }
 }, part);
 
@@ -157,8 +158,8 @@ export const InsertMany = Object.assign({
     const model: any = dbConnection?.model(nextDb[0], nextDb[1]);
     const create = await model.insertMany(Object.values(params).flat());
     if (create) {
-      return success ? success(true) : true;
-    } else return fail ? fail(false) : false;
+      return success ? success(true, fern) : true;
+    } else return fail ? fail(false, fern) : false;
   }
 }, part);
 
@@ -177,8 +178,8 @@ export const InsertOrUpdateWhere = (clause: string[]) => {
       const model: any = dbConnection?.model(nextDb[0], nextDb[1]);
       const update = await model.updateOne(clause, params, { upsert: true });
       if (update) {
-        return success ? success(true) : true;
-      } else return fail ? fail(false) : false;
+        return success ? success(true, fern) : true;
+      } else return fail ? fail(false, fern) : false;
     }
   }
   main.clause = clause;
@@ -201,8 +202,8 @@ export const UpdateWhere = (clause: string[]) => {
       const model: any = dbConnection?.model(nextDb[0], nextDb[1]);
       const update = await model.updateOne(clause, params);
       if (update) {
-        return success ? success(true) : true;
-      } else return fail ? fail(false) : false;
+        return success ? success(true, fern) : true;
+      } else return fail ? fail(false, fern) : false;
     }
   };
   main.clause = clause;
@@ -216,10 +217,10 @@ export const DeleteOne = Object.assign({
     const model = dbConnection?.model(nextDb[0], nextDb[1]);
     const get = await model?.deleteOne(params);
     if (get) {
-      if (exists) return exists(get);
+      if (exists) return exists(get, fern);
       else return true;
     } else {
-      if (doesNotExist) return doesNotExist();
+      if (doesNotExist) return doesNotExist(fern);
       else return false;
     }
   }
