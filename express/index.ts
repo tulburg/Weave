@@ -91,18 +91,17 @@ export class Fern {
     method = method.toLowerCase() as any;
     this.key = method + ':' + path;
     this.registry[this.key] = { callee: [], options: this.options } as any
-    this.app[method](path, (req: any, res: any) => {
+    this.app[method](path, (request: any, response: any) => {
       log(chalk.magenta('Receive => ') + method + ':' + path);
       const key = method + ':' + path;
       const instance = this.registry[key]
-      instance.request = req;
-      instance.response = res;
+      instance.request = request;
+      instance.response = response;
       instance.nextMethod = method.toUpperCase() as any;
       instance.nextStore = {}
 
       let index = 0;
       const callee = this.registry[method + ':' + path].callee;
-      let response = res;
       const callNext = () => {
         if (index < callee.length) {
           const fn = callee[index];

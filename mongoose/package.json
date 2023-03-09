@@ -1,6 +1,6 @@
 {
-  "name": "@fernjs/mongoose",
-  "version": "0.0.4",
+  "name": "@weave-protocol/mongoose",
+  "version": "0.0.1",
   "description": "Fern js mongoose data callbacks",
   "main": "dist/index.js",
   "scripts": {
@@ -16,8 +16,8 @@
   "keywords": [
     "Api",
     "framework",
-    "fernjs",
-    "fern",
+    "weavejs",
+    "weave",
     "mongodb",
     "mongoose"
   ],

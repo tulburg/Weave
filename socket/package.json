@@ -1,0 +1,18 @@
+{
+  "name": "@weavejs/socket",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "tsc -w & nodemon --watch",
+    "test": "jest dist/index.test.js",
+    "build": "tsc",
+    "prepublish": "tsc"
+  },
+  "keywords": [],
+  "author": "jsnative",
+  "license": "ISC",
+  "dependencies": {
+    "socket.io": "^4.6.1"
+  }
+}

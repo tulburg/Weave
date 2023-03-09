@@ -1,5 +1,5 @@
 {
-  "name": "@fernjs/express",
+  "name": "@weave/express",
   "version": "0.0.15",
   "description": "fernjs is an api development framework ",
   "main": "dist/index.js",

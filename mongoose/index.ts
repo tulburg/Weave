@@ -1,4 +1,12 @@
-type Fern = any;
+type Weave = {
+  body: { [key: string]: any }
+  header: { [key: string]: any }
+  params: { [key: string]: any }
+  store: { [key: string]: any }
+  query: { [key: string]: any }
+  options: { dbConnection: any }
+  db: any[]
+};
 type CalleeFunction<T = any> = (...args: T[]) => boolean | Promise<boolean | { code: number, message?: string, stack?: any }> | { code: number, message?: string, stack?: any }
 
 
@@ -24,13 +32,13 @@ const part = {
   },
 
   _from: function (type: 'body' | 'params' | 'header' | 'store' | 'query', args: string[], exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
-    return (_: any[], fern: Fern) => {
+    return (_: any[], instance: Weave) => {
       const source = {
-        body: fern.nextBody,
-        params: fern.nextParams,
-        header: fern.nextHeader,
-        store: fern.nextStore,
-        query: fern.nextQuery
+        body: instance.body,
+        params: instance.params,
+        header: instance.header,
+        store: instance.store,
+        query: instance.query
       };
       if (!source[type]) throw "Source (" + type + ") is not mapped";
       else {
@@ -38,24 +46,24 @@ const part = {
         args.forEach(k => {
           body[k] = source[type][k];
         });
-        return this._execute(fern, body, exists, doesNotExist);
+        return this._execute(instance, body, exists, doesNotExist);
       }
     }
   }
 }
 
 export const CheckIfExists = Object.assign({
-  _execute: async function (fern: Fern, params: { [key: string]: any }, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
-    if (fern.nextDb.length === 0) return false;
-    const { dbConnection } = fern.options;
-    const { nextDb } = fern;
-    const model = dbConnection?.model(nextDb[0], nextDb[1]);
+  _execute: async function (instance: Weave, params: { [key: string]: any }, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
+    if (instance.db.length === 0) return false;
+    const { dbConnection } = instance.options;
+    const { db } = instance;
+    const model = dbConnection?.model(db[0], db[1]);
     const check = await model?.findOne(params);
     if (check) {
-      if (exists) return exists(fern);
+      if (exists) return exists(instance);
       else return true;
     } else {
-      if (doesNotExist) return doesNotExist(fern);
+      if (doesNotExist) return doesNotExist(instance);
       else return false;
     }
   }
@@ -63,20 +71,20 @@ export const CheckIfExists = Object.assign({
 
 export const FetchWhere = Object.assign({
   rawParams: function (params: any, success?: CalleeFunction, fail?: CalleeFunction) {
-    return (fern: Fern) => {
-      this._execute(fern, params, success, fail)
+    return (instance: Weave) => {
+      this._execute(instance, params, success, fail)
     }
   },
-  _execute: async function (fern: Fern, params: { [key: string]: any }, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
-    const { dbConnection } = fern.options;
-    const { nextDb } = fern;
-    const model = dbConnection?.model(nextDb[0], nextDb[1]);
+  _execute: async function (instance: Weave, params: { [key: string]: any }, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
+    const { dbConnection } = instance.options;
+    const { db } = instance;
+    const model = dbConnection?.model(db[0], db[1]);
     const get = await model?.find(params);
     if (get && get.length > 0) {
-      if (exists) return exists(get, fern);
+      if (exists) return exists(get, instance);
       else return true;
     } else {
-      if (doesNotExist) return doesNotExist(fern);
+      if (doesNotExist) return doesNotExist(instance);
       else return false;
     }
   }
@@ -84,36 +92,36 @@ export const FetchWhere = Object.assign({
 
 export const Count = Object.assign({
   rawParams: function (params: any, success?: CalleeFunction, fail?: CalleeFunction) {
-    return (fern: Fern) => {
-      this._execute(fern, params, success, fail)
+    return (instance: Weave) => {
+      this._execute(instance, params, success, fail)
     }
   },
-  _execute: async function (fern: Fern, params: { [key: string]: any }, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
-    const { dbConnection } = fern.options;
-    const { nextDb } = fern;
-    const model = dbConnection?.model(nextDb[0], nextDb[1]);
+  _execute: async function (instance: Weave, params: { [key: string]: any }, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
+    const { dbConnection } = instance.options;
+    const { db } = instance;
+    const model = dbConnection?.model(db[0], db[1]);
     const get = await model?.count(params);
     if (get) {
-      if (exists) return exists(get, fern);
+      if (exists) return exists(get, instance);
       else return true;
     } else {
-      if (doesNotExist) return doesNotExist(fern);
+      if (doesNotExist) return doesNotExist(instance);
       else return false;
     }
   }
 }, part);
 
 export const FetchOne = Object.assign({
-  _execute: async function (fern: Fern, params: { [key: string]: any }, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
-    const { dbConnection } = fern.options;
-    const { nextDb } = fern;
-    const model = dbConnection?.model(nextDb[0], nextDb[1]);
+  _execute: async function (instance: Weave, params: { [key: string]: any }, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
+    const { dbConnection } = instance.options;
+    const { db } = instance;
+    const model = dbConnection?.model(db[0], db[1]);
     const get = await model?.findOne(params);
     if (get) {
-      if (exists) return exists(get, fern);
+      if (exists) return exists(get, instance);
       else return true;
     } else {
-      if (doesNotExist) return doesNotExist(fern);
+      if (doesNotExist) return doesNotExist(instance);
       else return false;
     }
   }
@@ -121,53 +129,53 @@ export const FetchOne = Object.assign({
 
 export const Fetch = {
   withLimit: function (limit?: { start: number, limit: number }, success?: CalleeFunction, fail?: CalleeFunction) {
-    return (fern: Fern) => {
-      return this._execute(fern, limit, success, fail);
+    return (instance: Weave) => {
+      return this._execute(instance, limit, success, fail);
     }
   },
-  _execute: async function (fern: Fern, limit: { start: number, limit: number }, success?: CalleeFunction, fail?: CalleeFunction) {
-    const { dbConnection } = fern.options;
-    const { nextDb } = fern;
-    const model = dbConnection?.model(nextDb[0], nextDb[1]);
+  _execute: async function (instance: Weave, limit: { start: number, limit: number }, success?: CalleeFunction, fail?: CalleeFunction) {
+    const { dbConnection } = instance.options;
+    const { db } = instance;
+    const model = dbConnection?.model(db[0], db[1]);
     const get = await (limit
       ? model?.find({}, null, { skip: limit.start, limit: limit.limit })
       : model?.find({}));
     if (get) {
-      fern.nextStore = get;
-      return success ? success(get, fern) : true;
-    } else return fail ? fail(false, fern) : false;
+      instance.store = get;
+      return success ? success(get, instance) : true;
+    } else return fail ? fail(false, instance) : false;
   }
 }
 
 export const Insert = Object.assign({
-  _execute: async function (fern: Fern, params: { [key: string]: any }, success?: CalleeFunction, fail?: CalleeFunction) {
-    const { dbConnection } = fern.options;
-    const { nextDb } = fern;
-    const model: any = dbConnection?.model(nextDb[0], nextDb[1]);
+  _execute: async function (instance: Weave, params: { [key: string]: any }, success?: CalleeFunction, fail?: CalleeFunction) {
+    const { dbConnection } = instance.options;
+    const { db } = instance;
+    const model: any = dbConnection?.model(db[0], db[1]);
     const create = await model.create(params);
     if (create) {
-      return success ? success(create, fern) : true;
-    } else return fail ? fail(false, fern) : false;
+      return success ? success(create, instance) : true;
+    } else return fail ? fail(false, instance) : false;
   }
 }, part);
 
 export const InsertMany = Object.assign({
-  _execute: async function (fern: Fern, params: { [key: string]: any }, success?: CalleeFunction, fail?: CalleeFunction) {
-    const { dbConnection } = fern.options;
-    const { nextDb } = fern;
-    const model: any = dbConnection?.model(nextDb[0], nextDb[1]);
+  _execute: async function (instance: Weave, params: { [key: string]: any }, success?: CalleeFunction, fail?: CalleeFunction) {
+    const { dbConnection } = instance.options;
+    const { db } = instance;
+    const model: any = dbConnection?.model(db[0], db[1]);
     const create = await model.insertMany(Object.values(params).flat());
     if (create) {
-      return success ? success(true, fern) : true;
-    } else return fail ? fail(false, fern) : false;
+      return success ? success(true, instance) : true;
+    } else return fail ? fail(false, instance) : false;
   }
 }, part);
 
 export const InsertOrUpdateWhere = (clause: string[]) => {
   const main: any = {
-    _execute: async function (fern: Fern, params: { [key: string]: any }, success?: CalleeFunction, fail?: CalleeFunction) {
-      const { dbConnection } = fern.options;
-      const { nextDb } = fern;
+    _execute: async function (instance: Weave, params: { [key: string]: any }, success?: CalleeFunction, fail?: CalleeFunction) {
+      const { dbConnection } = instance.options;
+      const { db } = instance;
       const clause: any = {};
       Object.keys(params).forEach((key: string) => {
         if (this.clause.indexOf(key) > -1) {
@@ -175,11 +183,11 @@ export const InsertOrUpdateWhere = (clause: string[]) => {
           delete params[key];
         }
       });
-      const model: any = dbConnection?.model(nextDb[0], nextDb[1]);
+      const model: any = dbConnection?.model(db[0], db[1]);
       const update = await model.updateOne(clause, params, { upsert: true });
       if (update) {
-        return success ? success(true, fern) : true;
-      } else return fail ? fail(false, fern) : false;
+        return success ? success(true, instance) : true;
+      } else return fail ? fail(false, instance) : false;
     }
   }
   main.clause = clause;
@@ -189,9 +197,9 @@ export const InsertOrUpdateWhere = (clause: string[]) => {
 
 export const UpdateWhere = (clause: string[]) => {
   const main: any = {
-    _execute: async function (fern: Fern, params: { [key: string]: any }, success?: CalleeFunction, fail?: CalleeFunction) {
-      const { dbConnection } = fern.options;
-      const { nextDb } = fern;
+    _execute: async function (instance: Weave, params: { [key: string]: any }, success?: CalleeFunction, fail?: CalleeFunction) {
+      const { dbConnection } = instance.options;
+      const { db } = instance;
       const clause: any = {};
       Object.keys(params).forEach((key: string) => {
         if (this.clause.indexOf(key) > -1) {
@@ -199,11 +207,11 @@ export const UpdateWhere = (clause: string[]) => {
           delete params[key];
         }
       });
-      const model: any = dbConnection?.model(nextDb[0], nextDb[1]);
+      const model: any = dbConnection?.model(db[0], db[1]);
       const update = await model.updateOne(clause, params);
       if (update) {
-        return success ? success(true, fern) : true;
-      } else return fail ? fail(false, fern) : false;
+        return success ? success(true, instance) : true;
+      } else return fail ? fail(false, instance) : false;
     }
   };
   main.clause = clause;
@@ -211,16 +219,16 @@ export const UpdateWhere = (clause: string[]) => {
 };
 
 export const DeleteOne = Object.assign({
-  _execute: async function (fern: Fern, params: { [key: string]: any }, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
-    const { dbConnection } = fern.options;
-    const { nextDb } = fern;
-    const model = dbConnection?.model(nextDb[0], nextDb[1]);
+  _execute: async function (instance: Weave, params: { [key: string]: any }, exists?: CalleeFunction, doesNotExist?: CalleeFunction) {
+    const { dbConnection } = instance.options;
+    const { db } = instance;
+    const model = dbConnection?.model(db[0], db[1]);
     const get = await model?.deleteOne(params);
     if (get) {
-      if (exists) return exists(get, fern);
+      if (exists) return exists(get, instance);
       else return true;
     } else {
-      if (doesNotExist) return doesNotExist(fern);
+      if (doesNotExist) return doesNotExist(instance);
       else return false;
     }
   }
