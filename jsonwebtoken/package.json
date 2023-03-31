@@ -1,6 +1,6 @@
 {
-  "name": "@fernjs/jsonwebtoken",
-  "version": "0.0.2",
+  "name": "@weave-protocol/jsonwebtoken",
+  "version": "0.0.1",
   "description": "JsonWebToken validator for fernjs",
   "main": "dist/index.js",
   "scripts": {
