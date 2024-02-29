@@ -58,32 +58,38 @@ export default class Socket {
           const callNext = () => {
             if (index < instance.callee.length) {
               const fn = instance.callee[index];
-              const res = fn(data, instance);
-              if (type(res) === 'promise') {
-                (res as Promise<boolean>).then((v) => {
-                  if (v === true) {
-                    index++;
-                    callNext();
-                  } else {
-                    if (!v)
-                      emitError({ code: 500, message: 'SocketError: Function failed' });
-                    else {
-                      if ((v as any).code === 200) emit(v);
-                      else emitError(v);
+              try {
+                const res = fn(data, instance);
+                if (type(res) === 'promise') {
+                  (res as Promise<boolean>).then((v) => {
+                    if (v === true) {
+                      index++;
+                      callNext();
+                    } else {
+                      if (!v)
+                        emitError({ code: 500, message: 'SocketError: Function failed' });
+                      else {
+                        if ((v as any).code === 200) emit(v);
+                        else emitError(v);
+                      }
                     }
+                  });
+                } else if (res === true) {
+                  index++;
+                  callNext();
+                } else if (type(res) === 'error') {
+                  emitError({ code: 500, message: 'SocketError: ' + ((res as any).message ? (res as any).message : 'Function failed'), stack: res })
+                } else {
+                  const result = res;
+                  if (!res)
+                    emitError({ code: 500, message: 'SocketError: Function failed' });
+                  else {
+                    if ((result as any).code === 200) emit(result);
+                    else emitError(result);
                   }
-                });
-              } else if (res === true) {
-                index++;
-                callNext();
-              } else {
-                const result = res;
-                if (!res)
-                  emitError({ code: 500, message: 'SocketError: Function failed' });
-                else {
-                  if ((result as any).code === 200) emit(result);
-                  else emitError(result);
                 }
+              } catch (e: any) {
+                emitError({ code: 500, message: 'SocketError: ' + (e.message ? e.message : ' Function failed'), stack: e })
               }
             }
           };

@@ -8,7 +8,6 @@ import chalk from 'chalk';
 
 import { type } from "./src/util";
 
-
 const oldConsole = global.console;
 global.console = {
   ...global.console,
@@ -39,13 +38,13 @@ export class Fern {
       callee: [CalleeFunction],
       request: core.Request,
       response: core.Response,
-      nextDb: any[],
-      nextBody: { [key: string]: any },
-      nextStore: { [key: string]: any },
-      nextHeader: { [key: string]: any },
-      nextParams: { [key: string]: any },
-      nextQuery: { [key: string]: any },
-      nextMethod: 'post' | 'get' | 'delete'
+      db: any[],
+      body: { [key: string]: any },
+      store: { [key: string]: any },
+      header: { [key: string]: any },
+      params: { [key: string]: any },
+      query: { [key: string]: any },
+      method: 'post' | 'get' | 'delete'
     }
   }
   key: string = "";
@@ -94,11 +93,12 @@ export class Fern {
     this.app[method](path, (request: any, response: any) => {
       log(chalk.magenta('Receive => ') + method + ':' + path);
       const key = method + ':' + path;
-      const instance = this.registry[key]
+      this.registry[key] = { callee: [], options: this.options } as any
+      const instance = this.registry[key];
       instance.request = request;
       instance.response = response;
-      instance.nextMethod = method.toUpperCase() as any;
-      instance.nextStore = {}
+      instance.method = method.toUpperCase() as any;
+      instance.store = {}
 
       let index = 0;
       const callee = this.registry[method + ':' + path].callee;
@@ -142,8 +142,8 @@ export class Fern {
       let checks = 0;
       keys.forEach(k => {
         if (instance.request?.body.hasOwnProperty(k)) {
-          instance.nextBody = instance.nextBody || {} as any;
-          instance.nextBody[k] = instance.request?.body[k];
+          instance.body = instance.body || {} as any;
+          instance.body[k] = instance.request?.body[k];
           checks++;
         }
       });
@@ -157,7 +157,7 @@ export class Fern {
   useBody(callback?: CalleeFunction) {
     const instance = this.registry[this.key]
     const fn = () => {
-      if (callback) return callback(instance.nextBody, instance);
+      if (callback) return callback(instance.body, instance);
       else return true;
     }
     instance.callee.push(fn as CalleeFunction);
@@ -173,8 +173,8 @@ export class Fern {
       let checks = 0;
       keys.forEach(k => {
         if (instance.request?.params.hasOwnProperty(k)) {
-          instance.nextParams = instance.nextParams || {} as any;
-          instance.nextParams[k] = instance.request?.params[k];
+          instance.params = instance.params || {} as any;
+          instance.params[k] = instance.request?.params[k];
           checks++;
         }
       });
@@ -188,7 +188,7 @@ export class Fern {
   useParams(callback?: CalleeFunction) {
     const instance = this.registry[this.key]
     const fn = () => {
-      if (callback) return callback(instance.nextParams, instance);
+      if (callback) return callback(instance.params, instance);
       else return true;
     }
     instance.callee.push(fn as CalleeFunction);
@@ -204,8 +204,8 @@ export class Fern {
       let checks = 0;
       keys.forEach(k => {
         if (instance.request?.query.hasOwnProperty(k)) {
-          instance.nextQuery = instance.nextQuery || {} as any;
-          instance.nextQuery[k] = instance.request?.query[k];
+          instance.query = instance.query || {} as any;
+          instance.query[k] = instance.request?.query[k];
           checks++;
         }
       });
@@ -219,7 +219,7 @@ export class Fern {
   useQuery(callback?: CalleeFunction) {
     const instance = this.registry[this.key]
     const fn = () => {
-      if (callback) return callback(instance.nextQuery, instance);
+      if (callback) return callback(instance.query, instance);
       else return true;
     }
     instance.callee.push(fn as CalleeFunction);
@@ -235,8 +235,8 @@ export class Fern {
       let checks = 0;
       keys.forEach(k => {
         if (instance.request?.headers.hasOwnProperty(k)) {
-          instance.nextHeader = instance.nextHeader || {} as any;
-          instance.nextHeader[k] = instance.request?.headers[k];
+          instance.header = instance.header || {} as any;
+          instance.header[k] = instance.request?.headers[k];
           checks++;
         }
       });
@@ -250,7 +250,7 @@ export class Fern {
   useHeader(callback?: CalleeFunction) {
     const instance = this.registry[this.key]
     const fn = () => {
-      if (callback) return callback(instance.nextHeader, instance);
+      if (callback) return callback(instance.header, instance);
       else return true;
     }
     instance.callee.push(fn as CalleeFunction);
@@ -260,7 +260,7 @@ export class Fern {
   mapDB(...args: any[]) {
     const instance = this.registry[this.key]
     const fn: CalleeFunction = () => {
-      instance.nextDb = args;
+      instance.db = args;
       return true;
     }
     instance.callee.push(fn);
@@ -272,7 +272,7 @@ export class Fern {
     const fn: CalleeFunction = async () => {
       let res = false;
       try {
-        res = await pFn(instance.nextDb, instance);
+        res = await pFn(instance.db, instance);
       } catch (e) { log(e) };
       return res;
     }
@@ -283,7 +283,7 @@ export class Fern {
   useStore(callback?: CalleeFunction) {
     const instance = this.registry[this.key]
     const fn = () => {
-      if (callback) return callback(instance.nextStore, instance);
+      if (callback) return callback(instance.store, instance);
       else return true;
     }
     instance.callee.push(fn as CalleeFunction);
