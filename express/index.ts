@@ -35,7 +35,7 @@ export class Fern {
   private server: any;
   registry: {
     [key: string]: {
-      callee: [CalleeFunction],
+      callee: CalleeFunction[],
       request: core.Request,
       response: core.Response,
       db: any[],
@@ -93,7 +93,6 @@ export class Fern {
     this.app[method](path, (request: any, response: any) => {
       log(chalk.magenta('Receive => ') + method + ':' + path);
       const key = method + ':' + path;
-      this.registry[key] = { callee: [], options: this.options } as any
       const instance = this.registry[key];
       instance.request = request;
       instance.response = response;
@@ -105,30 +104,37 @@ export class Fern {
       const callNext = () => {
         if (index < callee.length) {
           const fn = callee[index];
-          const res = fn(this);
-          if (type(res) === 'promise') {
-            (<Promise<boolean>>res).then((v: boolean | { code: number, message?: string, stack?: any }) => {
-              if (v === true) {
-                index++;
-                callNext();
-              } else {
-                if (!v) response?.sendError({ code: 500, message: 'FernError: Function failed' });
-                else if (v.code !== 200) response?.sendError(v);
-                else response?.sendOk(v);
-              }
-            })
-          } else if (res === true) {
-            index++;
-            callNext();
-          } else {
-            const result = res as { code: number, message?: string, stack?: any };
-            if (!res) response?.sendError({ code: 500, message: 'FernError: Function failed' });
-            else if (result.code !== 200) response?.sendError(result);
-            else response?.sendOk(result);
-          };
+          try {
+            const res = fn(this);
+            if (type(res) === 'promise') {
+              (<Promise<boolean>>res).then((v: boolean | { code: number, message?: string, stack?: any }) => {
+                if (v === true) {
+                  index++;
+                  callNext();
+                } else {
+                  if (!v) response?.sendError({ code: 500, message: 'FernError: Function failed' });
+                  else if (v.code !== 200) response?.sendError(v);
+                  else response?.sendOk(v);
+                }
+              })
+            } else if (res === true) {
+              index++;
+              callNext();
+            } else {
+              const result = res as { code: number, message?: string, stack?: any };
+              if (!res) response?.sendError({ code: 500, message: 'FernError: Function failed' });
+              else if (result.code !== 200) response?.sendError(result);
+              else response?.sendOk(result);
+            };
+          } catch (e) {
+            response?.sendError({ code: 500, message: 'FernError: Function failed', stack: e })
+          }
         }
       }
-      callNext();
+      if (callee.length === 0) {
+        response.sendError({ code: 500, message: "ServerError: Invalid implementation" })
+        return this;
+      } else callNext();
     });
     return this;
   }
