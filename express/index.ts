@@ -101,13 +101,17 @@ export class Fern {
     this.key = method + ":" + path;
     this.registry[this.key] = { callee: [], options: this.options } as any;
     this.app[method](path, (request: any, response: any) => {
-      log(chalk.magenta("Receive => ") + method + ":" + path);
+      const ip =
+        request.headers["x-forwarded-for"] || request.connection.remoteAddress;
+      log(chalk.magenta(`[${ip}] Receive => `) + method + ":" + path);
       const key = method + ":" + path;
       const instance = this.registry[key];
       instance.request = request;
       instance.response = response;
       instance.method = method.toUpperCase() as any;
-      instance.store = {};
+      instance.store = {
+        ip,
+      };
 
       let index = 0;
       const callee = this.registry[method + ":" + path].callee;

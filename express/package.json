@@ -1,6 +1,6 @@
 {
   "name": "@weave-protocol/express",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "fernjs is an api development framework ",
   "main": "dist/index.js",
   "scripts": {

@@ -1,6 +1,6 @@
 {
   "name": "@weave-protocol/mongoose",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Fern js mongoose data callbacks",
   "main": "dist/index.js",
   "scripts": {

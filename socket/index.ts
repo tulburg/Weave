@@ -38,19 +38,19 @@ export default class Socket {
     this.io.on("connection", (socket) => {
       Object.keys(this.registry).forEach((event) => {
         socket.on(event, (data) => {
+          const ip = socket.handshake.address;
           const instance: SocketInstance = {
             io: options.io,
             socket,
             event,
-            store: {},
+            store: { ip },
           } as any;
           console.log(">> ", "Connected successfully");
           instance.headers = instance.socket.handshake.headers;
           instance.privateheaders = instance.socket.handshake.headers;
           instance.options = options;
-
           instance.callee = this.registry[event];
-          console.log("<< Received " + event + " => ", data);
+          console.log(`<<[${ip}] Received ` + event + " => ", data);
 
           const emitError = (data: any) => {
             console.error("Sent Error => ", data);
