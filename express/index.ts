@@ -66,7 +66,10 @@ export class Fern {
         const logData = json.data;
         log(chalk.green("Send => "), 200, {
           ...json,
-          data: logData?.toString(),
+          data:
+            type(logData) === "string"
+              ? logData.substring(0, 64)
+              : logData?.toString(),
         });
         json.status = 200;
         this.status(200).json(json);
@@ -103,12 +106,30 @@ export class Fern {
     this.app[method](path, (request: any, response: any) => {
       const ip =
         request.headers["x-forwarded-for"] || request.connection.remoteAddress;
-      log(chalk.magenta(`[${ip}] Receive => `) + method + ":" + path);
+      log(
+        chalk.magenta(`[${ip}] Receive => `) +
+          method +
+          ":" +
+          path +
+          `, ${
+            method.toLowerCase() === "get"
+              ? JSON.stringify(request.query)
+              : JSON.stringify(
+                  request.body.password
+                    ? { ...request.body, password: "**********" }
+                    : request.body
+                )
+          }`
+      );
       const key = method + ":" + path;
       const instance = this.registry[key];
       instance.request = request;
       instance.response = response;
       instance.method = method.toUpperCase() as any;
+      instance.body = {};
+      instance.query = {};
+      instance.params = {};
+      instance.header = {};
       instance.store = {
         ip,
       };
