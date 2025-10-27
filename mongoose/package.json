@@ -1,7 +1,7 @@
 {
   "name": "@weave-protocol/mongoose",
   "version": "0.0.2",
-  "description": "Fern js mongoose data callbacks",
+  "description": "Weave js mongoose data callbacks",
   "main": "dist/index.js",
   "scripts": {
     "start": "tsc -w",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tulburg/fernjs.git"
+    "url": "git+https://github.com/tulburg/weavejs.git"
   }, 
   "keywords": [
     "Api",
@@ -24,9 +24,9 @@
   "author": "Tolu Oluwagbemi<demos_08_dovish@icloud.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/tulburg/fernjs/issues"
+    "url": "https://github.com/tulburg/weavejs/issues"
   },
-  "homepage": "https://github.com/tulburg/fernjs#readme",
+  "homepage": "https://github.com/tulburg/weavejs#readme",
   "devDependencies": {
     "typescript": "^4.8.2"
   },

@@ -1,12 +1,12 @@
 import Mongoose from "mongoose";
-import Fern from "@fernjs/express";
-import {JSONSchemaValidator, ShortText, LongText} from "@fernjs/json-schema-validator";
-import {CheckIfExists, FetchWhere} from "@fernjs/mongoose";
+import Weave from "@weave-protocol/express";
+import {JSONSchemaValidator, ShortText, LongText} from "@weave-protocol/json-schema-validator";
+import {CheckIfExists, FetchWhere} from "@weave-protocol/mongoose";
 import {UserSchema} from "./db/schema";
 
 const db = Mongoose.createConnection('mongodb://127.0.0.1:27017/test');
 
-const Api = new Fern({
+const Api = new Weave({
   dbConnection: db
 });
 // Api.use(FireWall);
@@ -17,8 +17,8 @@ Api.endpoint('/login', 'POST')
     email: ShortText.required(), 
     password: LongText.required()
   }))
-  .useBody((fern: Fern) => {
-    const { nextBody: body } = fern;
+  .useBody((weave: Weave) => {
+    const { nextBody: body } = weave;
     body.email = body.email + 'not working';
     return true;
   })

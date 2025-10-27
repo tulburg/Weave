@@ -1,10 +1,10 @@
 import { Validator, Schema } from "jsonschema";
-import Fern from "@fernjs/express";
-import { CalleeFunction } from "@fernjs/express/types";
+import Weave from "@weave-protocol/express";
+import { CalleeFunction } from "@weave-protocol/express/types";
 
 export function JSONSchemaValidator(keys: { [key: string]: Schema }, success?: CalleeFunction, fail?: CalleeFunction) {
-  return (fern: Fern) => {
-    const { nextParams, nextBody, nextMethod } = fern;
+  return (weave: Weave) => {
+    const { nextParams, nextBody, nextMethod } = weave;
     const validator = new Validator(),
       parentSchema: Schema = {
         type: 'object',

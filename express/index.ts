@@ -1,4 +1,4 @@
-import { CalleeFunction, FernConfiguration } from "./types";
+import { CalleeFunction, WeaveConfiguration } from "./types";
 import * as express from "express";
 import * as core from "express-serve-static-core";
 import fs from "fs";
@@ -31,8 +31,8 @@ declare module "express-serve-static-core" {
   }
 }
 
-export class Fern {
-  options: FernConfiguration;
+export class Weave {
+  options: WeaveConfiguration;
   private app: any;
   private server: any;
   registry: {
@@ -57,7 +57,7 @@ export class Fern {
   };
   use: any;
 
-  constructor(options: FernConfiguration) {
+  constructor(options: WeaveConfiguration) {
     this.options = Object.assign(this.defaultOptions, options);
     if (this.options.driver === "express") {
       this.app = express.default();
@@ -99,7 +99,7 @@ export class Fern {
     this.registry = {} as any;
   }
 
-  endpoint(path: string, method: "POST" | "GET" | "DELETE"): Fern {
+  endpoint(path: string, method: "POST" | "GET" | "DELETE"): Weave {
     method = method.toLowerCase() as any;
     this.key = method + ":" + path;
     this.registry[this.key] = { callee: [], options: this.options } as any;
@@ -161,7 +161,7 @@ export class Fern {
                       if (!v)
                         response?.sendError({
                           code: 500,
-                          message: "FernError: Function failed",
+                          message: "WeaveError: Function failed",
                         });
                       else if (v.code !== 200) response?.sendError(v);
                       else response?.sendOk(v);
@@ -171,7 +171,7 @@ export class Fern {
                 .catch((e: any) => {
                   response?.sendError({
                     code: 500,
-                    message: "FernError: Function failed",
+                    message: "WeaveError: Function failed",
                     stack: e,
                   });
                 });
@@ -187,7 +187,7 @@ export class Fern {
               if (!res)
                 response?.sendError({
                   code: 500,
-                  message: "FernError: Function failed",
+                  message: "WeaveError: Function failed",
                 });
               else if (result.code !== 200) response?.sendError(result);
               else response?.sendOk(result);
@@ -195,7 +195,7 @@ export class Fern {
           } catch (e) {
             response?.sendError({
               code: 500,
-              message: "FernError: Function failed",
+              message: "WeaveError: Function failed",
               stack: e,
             });
           }
@@ -362,7 +362,7 @@ export class Fern {
     return this;
   }
 
-  useDB(pFn: (db: any[], fern: any) => Promise<boolean>) {
+  useDB(pFn: (db: any[], weave: any) => Promise<boolean>) {
     const instance = this.registry[this.key];
     const fn: CalleeFunction = async () => {
       let res = false;
@@ -392,7 +392,7 @@ export class Fern {
       | string
       | { message: string }
       | any
-      | ((fern: Fern) => string | { message: string } | any)
+      | ((weave: Weave) => string | { message: string } | any)
   ) {
     const instance = this.registry[this.key];
     const fn: CalleeFunction = () => {
@@ -404,4 +404,4 @@ export class Fern {
   }
 }
 
-export default Fern;
+export default Weave;

@@ -1,6 +1,6 @@
 import * as Mongoose from "mongoose";
 
-export interface FernConfiguration {
+export interface WeaveConfiguration {
   dbConnection?: DatabaseConnection;
   driver?: "express";
   port?: number;
@@ -22,7 +22,7 @@ export type CalleeFunction<T = any> = (
       boolean | { code: number; message?: string; data?: any; stack?: any }
     >
   | { code: number; message?: string; data?: any; stack?: any };
-export interface Fern {
+export interface Weave {
   callee: [CalleeFunction];
   registry: { [key: string]: [CalleeFunction] };
 
